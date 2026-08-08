@@ -5,3 +5,7 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 *.egg-info/
+
+# Documentos de proceso interno (diseño/roadmap) - no son parte del repo publico
+01_spec_proyecto.md
+02_roadmap_fases.md
