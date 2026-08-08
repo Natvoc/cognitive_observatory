@@ -7,13 +7,16 @@ name = "cognitive-observatory"
 version = "0.1.0"
 description = "An open-source local laboratory for studying artificial observers, their internal models of reality, and the limits imposed by their cognitive architecture."
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "pyyaml>=6.0",
+]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0",
     "ruff>=0.6",
     "mypy>=1.10",
+    "types-PyYAML>=6.0",
 ]
 
 [project.scripts]

@@ -1,0 +1,22 @@
+name: hidden_variable
+seed: 42
+steps: 10000
+
+world:
+  hidden_state: A
+  initial_temperature: 20.0
+  initial_light: 0.5
+  initial_position: [0, 0]
+  temperature_noise_std: 0.1
+  light_noise_std: 0.05
+  light_drift: 0.01
+
+sensor:
+  type: noisy
+  noise_std: 0.05
+
+agents:
+  - type: reactive
+    name: agent_0_reactive
+  - type: predictive
+    name: agent_2_predictive
