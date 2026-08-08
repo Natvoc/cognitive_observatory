@@ -1,0 +1,8 @@
+{
+  "name": "attention_experiment",
+  "seed": 42,
+  "steps": 10000,
+  "hidden_state": "A",
+  "sensor_noise_std": 0.3,
+  "salience_saturation_delta": 0.6
+}
