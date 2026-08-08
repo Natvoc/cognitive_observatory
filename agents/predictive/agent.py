@@ -7,18 +7,12 @@ try to learn the environment's drift/noise parameters, only to show that
 integrating evidence over time beats reacting to a single observation.
 """
 
-import math
-
 from core.actions.action import Action
+from core.cognition.likelihood import gaussian_likelihood
 from core.cognition.prediction import PredictedState, Prediction
 from core.cognition.world_model import WorldModel
 from core.observer.agent import Observer
 from core.observer.observation import Observation
-
-
-def _gaussian_likelihood(x: float, mean: float, std: float) -> float:
-    variance = std**2
-    return math.exp(-((x - mean) ** 2) / (2 * variance)) / math.sqrt(2 * math.pi * variance)
 
 
 class PredictiveAgent(Observer):
@@ -34,8 +28,8 @@ class PredictiveAgent(Observer):
         self._light_std = light_std
 
     def act(self, observation: Observation) -> Action:
-        likelihood_a = _gaussian_likelihood(observation.light, self._light_mean_a, self._light_std)
-        likelihood_b = _gaussian_likelihood(observation.light, self._light_mean_b, self._light_std)
+        likelihood_a = gaussian_likelihood(observation.light, self._light_mean_a, self._light_std)
+        likelihood_b = gaussian_likelihood(observation.light, self._light_mean_b, self._light_std)
         self.world_model.update(likelihood_a, likelihood_b)
 
         prediction = self.predict(horizon=1)

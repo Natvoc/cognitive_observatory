@@ -48,6 +48,8 @@ def test_run_produces_traces_of_expected_length(tmp_path: Path) -> None:
     assert len(result.beliefs["agent_2_predictive"]) == 50
     assert set(result.metrics) == {"agent_0_reactive", "agent_2_predictive"}
     assert len(result.metrics["agent_2_predictive"]) == 50
+    assert set(result.divergence) == {"agent_0_reactive", "agent_2_predictive"}
+    assert len(result.divergence["agent_2_predictive"]) == 50
 
 
 def test_run_is_deterministic_given_same_seed(tmp_path: Path) -> None:
@@ -60,6 +62,7 @@ def test_run_is_deterministic_given_same_seed(tmp_path: Path) -> None:
     assert result_a.observation_trace == result_b.observation_trace
     assert result_a.beliefs == result_b.beliefs
     assert result_a.metrics == result_b.metrics
+    assert result_a.divergence == result_b.divergence
 
 
 def test_save_writes_expected_json_files(tmp_path: Path) -> None:
@@ -75,6 +78,7 @@ def test_save_writes_expected_json_files(tmp_path: Path) -> None:
         "observations.json",
         "beliefs.json",
         "metrics.json",
+        "divergence.json",
     ):
         assert (output_dir / filename).exists()
 
@@ -85,6 +89,10 @@ def test_save_writes_expected_json_files(tmp_path: Path) -> None:
     metrics = json.loads((output_dir / "metrics.json").read_text(encoding="utf-8"))
     assert len(metrics["agent_2_predictive"]) == 50
     assert all(0.0 <= error <= 1.0 for error in metrics["agent_2_predictive"])
+
+    divergence = json.loads((output_dir / "divergence.json").read_text(encoding="utf-8"))
+    assert len(divergence["agent_2_predictive"]) == 50
+    assert all(0.0 <= d <= 2**0.5 for d in divergence["agent_2_predictive"])
 
 
 def test_cli_run_persists_json_under_experiments_dir(tmp_path: Path) -> None:
@@ -109,6 +117,7 @@ def test_cli_run_persists_json_under_experiments_dir(tmp_path: Path) -> None:
         "observations.json",
         "beliefs.json",
         "metrics.json",
+        "divergence.json",
     ):
         assert (output_dir / filename).exists()
 
@@ -129,7 +138,14 @@ def test_cli_run_same_seed_produces_byte_identical_json(tmp_path: Path) -> None:
     dir_a = next((tmp_path / "run_a" / "experiments").glob("*"))
     dir_b = next((tmp_path / "run_b" / "experiments").glob("*"))
 
-    for filename in ("ground_truth.json", "observations.json", "beliefs.json", "metrics.json"):
+    filenames = (
+        "ground_truth.json",
+        "observations.json",
+        "beliefs.json",
+        "metrics.json",
+        "divergence.json",
+    )
+    for filename in filenames:
         assert (dir_a / filename).read_bytes() == (dir_b / filename).read_bytes()
 
 

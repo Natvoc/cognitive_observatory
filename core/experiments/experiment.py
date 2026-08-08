@@ -17,12 +17,13 @@ from core.observer.observation import Observation
 from core.observer.sensor import Sensor
 from core.world.base import World
 from core.world.ground_truth import GroundTruth
+from metrics.information import reality_model_divergence
 from metrics.prediction import prediction_error
 
 
 class BeliefRecord(TypedDict):
     predicted_hidden_state: str
-    confidence: float | None
+    confidence: float
 
 
 def _belief_distribution(agent: Observer, action: Action) -> dict[str, float]:
@@ -50,6 +51,7 @@ class Experiment:
         observation_trace: list[Observation] = []
         beliefs: dict[str, list[BeliefRecord]] = {name: [] for name in self.agents}
         metrics: dict[str, list[float]] = {name: [] for name in self.agents}
+        divergence: dict[str, list[float]] = {name: [] for name in self.agents}
 
         for _ in range(self.steps):
             self.world.step()
@@ -62,22 +64,18 @@ class Experiment:
 
             for agent_name, agent in self.agents.items():
                 action = agent.act(observation)
-                predicted_hidden_state = action.name.removeprefix("guess_")
-                world_model = getattr(agent, "world_model", None)
-                confidence = (
-                    max(world_model.belief_a, world_model.belief_b)
-                    if world_model is not None
-                    else None
-                )
+                distribution = _belief_distribution(agent, action)
+
                 beliefs[agent_name].append(
                     BeliefRecord(
-                        predicted_hidden_state=predicted_hidden_state,
-                        confidence=confidence,
+                        predicted_hidden_state=action.name.removeprefix("guess_"),
+                        confidence=max(distribution.values()),
                     )
                 )
-
-                distribution = _belief_distribution(agent, action)
                 metrics[agent_name].append(prediction_error(distribution, actual_hidden_state))
+                divergence[agent_name].append(
+                    reality_model_divergence(distribution, actual_hidden_state)
+                )
 
         return ExperimentResult(
             config=self.config,
@@ -85,6 +83,7 @@ class Experiment:
             observation_trace=observation_trace,
             beliefs=beliefs,
             metrics=metrics,
+            divergence=divergence,
         )
 
 
@@ -95,6 +94,7 @@ class ExperimentResult:
     observation_trace: list[Observation]
     beliefs: dict[str, list[BeliefRecord]]
     metrics: dict[str, list[float]]
+    divergence: dict[str, list[float]]
 
     def save(self, output_dir: Path) -> None:
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -109,6 +109,7 @@ class ExperimentResult:
         )
         _write_json(output_dir / "beliefs.json", self.beliefs)
         _write_json(output_dir / "metrics.json", self.metrics)
+        _write_json(output_dir / "divergence.json", self.divergence)
 
 
 def _write_json(path: Path, data: Any) -> None:

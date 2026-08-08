@@ -12,6 +12,7 @@ from typing import Any
 import yaml
 
 from agents.memory import MemoryAgent
+from agents.metacognitive import MetacognitiveAgent
 from agents.predictive import PredictiveAgent
 from agents.reactive import ReactiveAgent
 from core.experiments.experiment import Experiment
@@ -32,7 +33,7 @@ def load_experiment(config_path: Path) -> Experiment:
         steps=config["steps"],
         world=_build_world(config["world"], seed),
         sensor=_build_sensor(config["sensor"], seed),
-        agents=_build_agents(config["agents"]),
+        agents=_build_agents(config["agents"], seed),
         config=config,
     )
 
@@ -50,7 +51,7 @@ def _build_sensor(sensor_config: dict[str, Any], seed: int) -> Sensor:
     raise ValueError(f"unknown sensor type: {sensor_type!r}")
 
 
-def _build_agents(agents_config: list[dict[str, Any]]) -> dict[str, Observer]:
+def _build_agents(agents_config: list[dict[str, Any]], seed: int) -> dict[str, Observer]:
     agents: dict[str, Observer] = {}
     for entry in agents_config:
         agent_type = entry["type"]
@@ -61,6 +62,11 @@ def _build_agents(agents_config: list[dict[str, Any]]) -> dict[str, Observer]:
             agents[name] = PredictiveAgent()
         elif agent_type == "memory":
             agents[name] = MemoryAgent(capacity=entry["capacity"])
+        elif agent_type == "metacognitive":
+            agents[name] = MetacognitiveAgent(
+                seed=entry.get("seed", seed),
+                confidence_threshold=entry.get("confidence_threshold", 0.7),
+            )
         else:
             raise ValueError(f"unknown agent type: {agent_type!r}")
     return agents
