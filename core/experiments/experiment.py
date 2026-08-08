@@ -11,16 +11,28 @@ import json
 from pathlib import Path
 from typing import Any, TypedDict
 
+from core.actions.action import Action
 from core.observer.agent import Observer
 from core.observer.observation import Observation
 from core.observer.sensor import Sensor
 from core.world.base import World
 from core.world.ground_truth import GroundTruth
+from metrics.prediction import prediction_error
 
 
 class BeliefRecord(TypedDict):
     predicted_hidden_state: str
     confidence: float | None
+
+
+def _belief_distribution(agent: Observer, action: Action) -> dict[str, float]:
+    """P(hidden_state=A/B) - from the agent's world model if it has one,
+    otherwise the degenerate one-hot distribution implied by its hard guess."""
+    world_model = getattr(agent, "world_model", None)
+    if world_model is not None:
+        return {"A": world_model.belief_a, "B": world_model.belief_b}
+    guessed = action.name.removeprefix("guess_")
+    return {"A": 1.0 if guessed == "A" else 0.0, "B": 1.0 if guessed == "B" else 0.0}
 
 
 @dataclasses.dataclass
@@ -37,11 +49,13 @@ class Experiment:
         ground_truth_trace: list[GroundTruth] = []
         observation_trace: list[Observation] = []
         beliefs: dict[str, list[BeliefRecord]] = {name: [] for name in self.agents}
+        metrics: dict[str, list[float]] = {name: [] for name in self.agents}
 
         for _ in range(self.steps):
             self.world.step()
             ground_truth = self.world.get_state()
             observation = self.sensor.observe(ground_truth)
+            actual_hidden_state = ground_truth.causal_state["hidden_state"]
 
             ground_truth_trace.append(ground_truth)
             observation_trace.append(observation)
@@ -62,11 +76,15 @@ class Experiment:
                     )
                 )
 
+                distribution = _belief_distribution(agent, action)
+                metrics[agent_name].append(prediction_error(distribution, actual_hidden_state))
+
         return ExperimentResult(
             config=self.config,
             ground_truth_trace=ground_truth_trace,
             observation_trace=observation_trace,
             beliefs=beliefs,
+            metrics=metrics,
         )
 
 
@@ -76,6 +94,7 @@ class ExperimentResult:
     ground_truth_trace: list[GroundTruth]
     observation_trace: list[Observation]
     beliefs: dict[str, list[BeliefRecord]]
+    metrics: dict[str, list[float]]
 
     def save(self, output_dir: Path) -> None:
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -89,6 +108,7 @@ class ExperimentResult:
             [dataclasses.asdict(obs) for obs in self.observation_trace],
         )
         _write_json(output_dir / "beliefs.json", self.beliefs)
+        _write_json(output_dir / "metrics.json", self.metrics)
 
 
 def _write_json(path: Path, data: Any) -> None:

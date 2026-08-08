@@ -46,6 +46,8 @@ def test_run_produces_traces_of_expected_length(tmp_path: Path) -> None:
     assert set(result.beliefs) == {"agent_0_reactive", "agent_2_predictive"}
     assert len(result.beliefs["agent_0_reactive"]) == 50
     assert len(result.beliefs["agent_2_predictive"]) == 50
+    assert set(result.metrics) == {"agent_0_reactive", "agent_2_predictive"}
+    assert len(result.metrics["agent_2_predictive"]) == 50
 
 
 def test_run_is_deterministic_given_same_seed(tmp_path: Path) -> None:
@@ -57,6 +59,7 @@ def test_run_is_deterministic_given_same_seed(tmp_path: Path) -> None:
     assert result_a.ground_truth_trace == result_b.ground_truth_trace
     assert result_a.observation_trace == result_b.observation_trace
     assert result_a.beliefs == result_b.beliefs
+    assert result_a.metrics == result_b.metrics
 
 
 def test_save_writes_expected_json_files(tmp_path: Path) -> None:
@@ -66,12 +69,22 @@ def test_save_writes_expected_json_files(tmp_path: Path) -> None:
     output_dir = tmp_path / "output"
     result.save(output_dir)
 
-    for filename in ("config.json", "ground_truth.json", "observations.json", "beliefs.json"):
+    for filename in (
+        "config.json",
+        "ground_truth.json",
+        "observations.json",
+        "beliefs.json",
+        "metrics.json",
+    ):
         assert (output_dir / filename).exists()
 
     ground_truth = json.loads((output_dir / "ground_truth.json").read_text(encoding="utf-8"))
     assert len(ground_truth) == 50
     assert "hidden_state" not in ground_truth[0].get("variables", {})
+
+    metrics = json.loads((output_dir / "metrics.json").read_text(encoding="utf-8"))
+    assert len(metrics["agent_2_predictive"]) == 50
+    assert all(0.0 <= error <= 1.0 for error in metrics["agent_2_predictive"])
 
 
 def test_cli_run_persists_json_under_experiments_dir(tmp_path: Path) -> None:
@@ -90,7 +103,13 @@ def test_cli_run_persists_json_under_experiments_dir(tmp_path: Path) -> None:
     run_dirs = list((tmp_path / "experiments").glob("*_hidden_variable_test_7"))
     assert len(run_dirs) == 1
     output_dir = run_dirs[0]
-    for filename in ("config.json", "ground_truth.json", "observations.json", "beliefs.json"):
+    for filename in (
+        "config.json",
+        "ground_truth.json",
+        "observations.json",
+        "beliefs.json",
+        "metrics.json",
+    ):
         assert (output_dir / filename).exists()
 
 
@@ -110,5 +129,15 @@ def test_cli_run_same_seed_produces_byte_identical_json(tmp_path: Path) -> None:
     dir_a = next((tmp_path / "run_a" / "experiments").glob("*"))
     dir_b = next((tmp_path / "run_b" / "experiments").glob("*"))
 
-    for filename in ("ground_truth.json", "observations.json", "beliefs.json"):
+    for filename in ("ground_truth.json", "observations.json", "beliefs.json", "metrics.json"):
         assert (dir_a / filename).read_bytes() == (dir_b / filename).read_bytes()
+
+
+def test_prediction_error_curve_trends_down_for_predictive_agent(tmp_path: Path) -> None:
+    experiment = load_experiment(_write_config(tmp_path))
+    result = experiment.run()
+
+    errors = result.metrics["agent_2_predictive"]
+    early_avg = sum(errors[:10]) / 10
+    late_avg = sum(errors[-10:]) / 10
+    assert late_avg < early_avg

@@ -11,6 +11,7 @@ from typing import Any
 
 import yaml
 
+from agents.memory import MemoryAgent
 from agents.predictive import PredictiveAgent
 from agents.reactive import ReactiveAgent
 from core.experiments.experiment import Experiment
@@ -58,6 +59,8 @@ def _build_agents(agents_config: list[dict[str, Any]]) -> dict[str, Observer]:
             agents[name] = ReactiveAgent()
         elif agent_type == "predictive":
             agents[name] = PredictiveAgent()
+        elif agent_type == "memory":
+            agents[name] = MemoryAgent(capacity=entry["capacity"])
         else:
             raise ValueError(f"unknown agent type: {agent_type!r}")
     return agents

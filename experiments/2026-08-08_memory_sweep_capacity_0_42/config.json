@@ -1,0 +1,8 @@
+{
+  "name": "memory_sweep_capacity_0",
+  "seed": 42,
+  "steps": 10000,
+  "hidden_state": "A",
+  "sensor_noise_std": 0.3,
+  "memory_capacity": 0
+}

@@ -1,0 +1,6 @@
+memory_capacity,early_accuracy_first_100,final_accuracy_last_1000,final_avg_error_last_1000
+0,0.88,0.895,0.105
+10,0.99,1.0,0.0
+50,0.99,1.0,0.0
+100,0.99,1.0,0.0
+500,0.99,1.0,0.0
