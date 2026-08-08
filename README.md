@@ -56,10 +56,10 @@ mínimo (`cognitive-observatory --version`).
 memoria) vs. Agent 2 (predictivo, con belief bayesiano) corriendo de punta a
 punta sobre el experimento de variable oculta, con Experiment Runner
 determinista (mismo seed → mismo resultado, bit a bit). Resultado: en una
-corrida de 10.000 steps, Agent 2 alcanza accuracy 0.9997 vs. 0.9845 de
-Agent 0, y queda perfectamente estable una vez que converge (Agent 0 sigue
-cometiendo errores ocasionales por reaccionar a una sola observación
-ruidosa cada vez).
+corrida de 10.000 steps (bajo ruido de sensor moderado), Agent 2 alcanza
+accuracy 0.9997 vs. 0.9845 de Agent 0, y queda perfectamente estable una vez
+que converge (Agent 0 sigue cometiendo errores ocasionales por reaccionar a
+una sola observación ruidosa cada vez).
 
 **Fase 2 — Métrica de error + memoria.** `prediction_error` (Brier score)
 registrado por step. Agent 1 (con memoria de capacidad fija) se agrega a la
@@ -84,12 +84,22 @@ cognitive-observatory run experiment.yaml
 
 ## Desarrollo
 
+**Windows:**
 ```
 py -3.12 -m venv .venv
 .venv\Scripts\pip install -e ".[dev]"
 .venv\Scripts\pytest
 .venv\Scripts\ruff check .
 .venv\Scripts\mypy .
+```
+
+**macOS / Linux:**
+```
+python3.12 -m venv .venv
+.venv/bin/pip install -e ".[dev]"
+.venv/bin/pytest
+.venv/bin/ruff check .
+.venv/bin/mypy .
 ```
 
 ## Stack técnico
