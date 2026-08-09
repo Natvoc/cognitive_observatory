@@ -1,5 +1,7 @@
 from agents.metacognitive import MetacognitiveAgent
-from core.observer import Observation
+from core.cognition.self_model import SelfModel
+from core.observer import NoisySensor, Observation
+from environments.hidden_variable import HiddenVariableWorld, HiddenVariableWorldConfig
 
 
 def test_evaluate_belief_reflects_last_confidence_and_evidence() -> None:
@@ -43,3 +45,31 @@ def test_low_confidence_explores_instead_of_always_committing_to_slim_lead() -> 
     guesses = {agent.act(midpoint_observation).name for _ in range(30)}
 
     assert guesses == {"guess_A", "guess_B"}
+
+
+def test_self_declared_capabilities_and_limitations_do_not_affect_behavior() -> None:
+    # Fase 5.1: the capabilities/limitations declared in __init__ are pure
+    # metadata - stripping them right after construction must not change
+    # a single action or belief value over an identical run.
+    world = HiddenVariableWorld(HiddenVariableWorldConfig(seed=10, hidden_state="A"))
+    sensor = NoisySensor(noise_std=0.3, seed=11)
+
+    agent_with_declarations = MetacognitiveAgent(seed=1)
+    agent_without_declarations = MetacognitiveAgent(seed=1)
+    agent_without_declarations.self_model = SelfModel()
+
+    assert agent_with_declarations.self_model.capabilities
+    assert agent_with_declarations.self_model.limitations
+    assert agent_without_declarations.self_model.capabilities == []
+    assert agent_without_declarations.self_model.limitations == []
+
+    for _ in range(500):
+        world.step()
+        observation = sensor.observe(world.get_state())
+        action_with = agent_with_declarations.act(observation)
+        action_without = agent_without_declarations.act(observation)
+        assert action_with == action_without
+        assert (
+            agent_with_declarations.world_model.belief_a
+            == agent_without_declarations.world_model.belief_a
+        )

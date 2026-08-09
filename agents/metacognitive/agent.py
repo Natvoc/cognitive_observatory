@@ -32,11 +32,21 @@ class MetacognitiveAgent(Observer):
     ) -> None:
         self.world_model = WorldModel()
         self.self_model = SelfModel()
+        self._declare_self_knowledge()
         self._rng = random.Random(seed)
         self._confidence_threshold = confidence_threshold
         self._light_mean_a = light_mean_a
         self._light_mean_b = light_mean_b
         self._light_std = light_std
+
+    def _declare_self_knowledge(self) -> None:
+        """Fixed, designer-known facts about this architecture, exposed
+        as queryable SelfModel state (spec §5.1) - not something the
+        agent discovered about itself. Pure metadata: touches only
+        self.self_model, never anything act() reads."""
+        self.self_model.add_capability("maintains a probabilistic belief over hidden_state")
+        self.self_model.add_capability("adjusts confidence-driven exploration vs. exploitation")
+        self.self_model.add_limitation("hidden_state inaccessible: never present in Observation")
 
     def act(self, observation: Observation) -> Action:
         likelihood_a = gaussian_likelihood(observation.light, self._light_mean_a, self._light_std)
