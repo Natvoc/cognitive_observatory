@@ -9,6 +9,7 @@ instead of blindly committing to whichever state is even slightly ahead.
 """
 
 import random
+from dataclasses import dataclass
 
 from core.actions.action import Action
 from core.cognition.likelihood import gaussian_likelihood
@@ -19,6 +20,12 @@ from core.observer.agent import Observer
 from core.observer.observation import Observation
 
 BELIEF_ID = "hidden_state_is_a"
+
+
+@dataclass(frozen=True)
+class SelfModelDescription:
+    capabilities: list[str]
+    limitations: list[str]
 
 
 class MetacognitiveAgent(Observer):
@@ -39,14 +46,35 @@ class MetacognitiveAgent(Observer):
         self._light_mean_b = light_mean_b
         self._light_std = light_std
 
+    @classmethod
+    def self_model_description(cls) -> SelfModelDescription:
+        """Fixed, designer-known facts about this architecture (spec
+        §5.1) - a classmethod because this metadata never depends on
+        instance state (seed, thresholds, etc.), so callers who only
+        want to know "what can this architecture do" shouldn't need to
+        construct an agent to find out. This is the single source of
+        truth _declare_self_knowledge() below feeds into a live
+        SelfModel."""
+        return SelfModelDescription(
+            capabilities=[
+                "maintains a probabilistic belief over hidden_state",
+                "adjusts confidence-driven exploration vs. exploitation",
+            ],
+            limitations=[
+                "hidden_state inaccessible: never present in Observation",
+            ],
+        )
+
     def _declare_self_knowledge(self) -> None:
-        """Fixed, designer-known facts about this architecture, exposed
-        as queryable SelfModel state (spec §5.1) - not something the
-        agent discovered about itself. Pure metadata: touches only
-        self.self_model, never anything act() reads."""
-        self.self_model.add_capability("maintains a probabilistic belief over hidden_state")
-        self.self_model.add_capability("adjusts confidence-driven exploration vs. exploitation")
-        self.self_model.add_limitation("hidden_state inaccessible: never present in Observation")
+        """Exposes the fixed description above as queryable SelfModel
+        state - not something the agent discovered about itself. Pure
+        metadata: touches only self.self_model, never anything act()
+        reads."""
+        description = self.self_model_description()
+        for capability in description.capabilities:
+            self.self_model.add_capability(capability)
+        for limitation in description.limitations:
+            self.self_model.add_limitation(limitation)
 
     def act(self, observation: Observation) -> Action:
         likelihood_a = gaussian_likelihood(observation.light, self._light_mean_a, self._light_std)

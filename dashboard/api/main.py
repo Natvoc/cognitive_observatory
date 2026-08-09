@@ -10,6 +10,8 @@ from typing import Any
 
 from fastapi import Depends, FastAPI, HTTPException
 
+from agents.metacognitive import SelfModelDescription
+from dashboard.api.agent_info import AgentTypeNotFoundError, get_agent_self_model
 from dashboard.api.runs import (
     DEFAULT_EXPERIMENTS_DIR,
     RunNotFoundError,
@@ -37,4 +39,12 @@ def get_run(
     try:
         return load_run(run_id, experiments_dir)
     except RunNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+@app.get("/agent-info/{agent_type}")
+def get_agent_info(agent_type: str) -> SelfModelDescription:
+    try:
+        return get_agent_self_model(agent_type)
+    except AgentTypeNotFoundError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error

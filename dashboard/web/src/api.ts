@@ -1,4 +1,4 @@
-import type { RunData, RunSummary } from "./types";
+import type { RunData, RunSummary, SelfModelDescription } from "./types";
 
 const API_BASE = "/api";
 
@@ -16,4 +16,8 @@ export function fetchRuns(): Promise<RunSummary[]> {
 
 export function fetchRun(runId: string): Promise<RunData> {
   return getJSON<RunData>(`/runs/${encodeURIComponent(runId)}`);
+}
+
+export function fetchAgentInfo(agentType: string): Promise<SelfModelDescription> {
+  return getJSON<SelfModelDescription>(`/agent-info/${encodeURIComponent(agentType)}`);
 }

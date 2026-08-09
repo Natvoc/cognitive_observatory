@@ -42,3 +42,56 @@ h1 {
 .error {
   color: #dc2626;
 }
+
+.view-heading {
+  margin-top: 2rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid #8884;
+}
+
+.note {
+  font-size: 0.85rem;
+  color: #888;
+  margin: 0.25rem 0 1rem;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.data-table th,
+.data-table td {
+  text-align: left;
+  padding: 0.3rem 0.6rem;
+  border-bottom: 1px solid #8882;
+  white-space: nowrap;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.data-table td.correct {
+  color: #16a34a;
+}
+
+.data-table td.incorrect {
+  color: #dc2626;
+}
+
+.self-model-card {
+  margin-top: 0.75rem;
+}
+
+.self-model-card h3 {
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+}
+
+.self-model-card ul {
+  margin: 0 0 0.5rem;
+  padding-left: 1.25rem;
+  font-size: 0.85rem;
+}

@@ -1,3 +1,3 @@
-from agents.metacognitive.agent import MetacognitiveAgent
+from agents.metacognitive.agent import MetacognitiveAgent, SelfModelDescription
 
-__all__ = ["MetacognitiveAgent"]
+__all__ = ["MetacognitiveAgent", "SelfModelDescription"]

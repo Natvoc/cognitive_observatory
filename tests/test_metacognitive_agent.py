@@ -73,3 +73,13 @@ def test_self_declared_capabilities_and_limitations_do_not_affect_behavior() -> 
             agent_with_declarations.world_model.belief_a
             == agent_without_declarations.world_model.belief_a
         )
+
+
+def test_self_model_description_matches_a_real_instance_no_drift() -> None:
+    # Fase 6.3: the classmethod is meant to be a read without construction,
+    # but it must never drift from what a real instance actually declares.
+    description = MetacognitiveAgent.self_model_description()
+    instance = MetacognitiveAgent(seed=1)
+
+    assert description.capabilities == instance.self_model.capabilities
+    assert description.limitations == instance.self_model.limitations

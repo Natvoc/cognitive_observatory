@@ -1,10 +1,12 @@
 /** Turns {agentName: values[]} into Recharts-friendly rows:
  * [{step: 0, agentA: v, agentB: v}, ...] - one line per agent, subsampled
- * for performance on long runs. */
+ * for performance on long runs. A `null` entry (e.g. from beliefA() on a
+ * pre-Fase-3 run) is passed through as-is - Recharts renders it as a gap
+ * in that agent's line rather than a wrong value. */
 export function mergeSeries(
-  seriesByAgent: Record<string, number[]>,
+  seriesByAgent: Record<string, (number | null)[]>,
   maxPoints = 500,
-): Record<string, number>[] {
+): Record<string, number | null>[] {
   const agentNames = Object.keys(seriesByAgent).sort();
   if (agentNames.length === 0) {
     return [];
@@ -12,7 +14,7 @@ export function mergeSeries(
 
   const steps = seriesByAgent[agentNames[0]].length;
   const rows = Array.from({ length: steps }, (_, step) => {
-    const row: Record<string, number> = { step };
+    const row: Record<string, number | null> = { step };
     for (const agent of agentNames) {
       row[agent] = seriesByAgent[agent][step];
     }

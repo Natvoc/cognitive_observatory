@@ -52,3 +52,17 @@ def test_get_run_returns_404_for_unknown_run(client: TestClient) -> None:
 def test_get_run_returns_404_for_path_traversal_attempt(client: TestClient) -> None:
     response = client.get("/runs/..%2Fsecrets")
     assert response.status_code == 404
+
+
+def test_get_agent_info_returns_metacognitive_description(client: TestClient) -> None:
+    response = client.get("/agent-info/metacognitive")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["capabilities"]
+    assert data["limitations"]
+
+
+def test_get_agent_info_returns_404_for_unknown_agent_type(client: TestClient) -> None:
+    response = client.get("/agent-info/does_not_exist")
+    assert response.status_code == 404
