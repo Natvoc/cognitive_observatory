@@ -72,9 +72,43 @@ promediar una señal ruidosa con más muestras solo puede ayudar o estancarse,
 nunca empeorar. Ese tipo de resultado — confirmar o refutar una hipótesis
 con un número reproducible — es lo que este proyecto busca producir.
 
+**Fase 3 — Reality-Model Divergence + Self Model + Agent 3.**
+`reality_model_divergence` (distancia simple, no information-theoretic
+todavía) registrada por step. `SelfModel.evaluate_belief()` (confianza +
+evidencia). Agent 3 explota su belief si su confianza supera un umbral, y
+explora (muestrea proporcional al belief) si no. Con los 4 agentes
+compitiendo en el mismo experimento, el hallazgo de calibración: Agent 0 y
+Agent 1 reportan 100% de confianza siempre pero aciertan 88.8%/99.4% de las
+veces (sobreconfiados por construcción, no representan incertidumbre real);
+Agent 2 y Agent 3 reportan una confianza que sí coincide con su accuracy
+real (~100%/~100%).
+
+**Fase 4 — Attention system.** `UniformAttention` (baseline) y
+`SalienceAttention` (pondera por cuánto cambió `light` desde el step
+anterior). Dos observadores Predictive reciben exactamente las mismas
+observaciones crudas y terminan con beliefs distintos solo por cómo
+atienden (diferencia máxima de belief de 0.74 en un mismo step, 4/10000
+guesses en desacuerdo).
+
+**Fase 5 — Self Model completo + reporting.** `SelfModel` gana
+`capabilities`/`limitations` (metadata declarada por diseño, no
+autoconocimiento emergente — Agent 3 se auto-declara "hidden_state
+inaccessible"). Cada corrida vía CLI genera automáticamente un
+`report.html` autocontenido (sin JS, sin recursos externos) con
+accuracy/prediction_error/divergence por agente.
+
+**Fase 6 — Dashboard** (en curso; evaluamos que valía la pena antes de
+empezar). 6.1: API de FastAPI de solo lectura sobre `experiments/`
+(`GET /runs`, `GET /runs/{run_id}`), sin ningún endpoint que ejecute o
+escriba nada. 6.2: frontend (Vite + React + TypeScript + Recharts) con
+selector de corridas y vista principal — World (ground truth) y Observer
+(belief) lado a lado evolucionando en el tiempo, más `prediction_error`
+por agente. Ver `dashboard/web/README.md` para correrlo.
+
 Cada corrida queda persistida en `experiments/<fecha>_<nombre>_<seed>/` con
-`config.json`, `ground_truth.json`, `observations.json`, `beliefs.json` y
-`metrics.json`.
+`config.json`, `ground_truth.json`, `observations.json`, `beliefs.json`,
+`metrics.json` y `divergence.json` (desde Fase 3 — ver
+`experiments/CHANGELOG.md` para el detalle de ese cambio de schema).
 
 ## Cómo correr un experimento
 
@@ -104,5 +138,7 @@ python3.12 -m venv .venv
 
 ## Stack técnico
 
-Python 3.12+, pytest/ruff/mypy, PyYAML — sin dependencias de ML ni web hasta
-que una fase futura las necesite de verdad.
+Python 3.12+, pytest/ruff/mypy, PyYAML. Desde Fase 6 (dashboard):
+FastAPI/pydantic/uvicorn (API de solo lectura) y, en `dashboard/web/`,
+Vite + React + TypeScript + Recharts. Sin nada de esto hasta que la fase
+correspondiente lo necesitó de verdad.
