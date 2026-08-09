@@ -43,9 +43,10 @@ el estado oculto a partir de esos efectos indirectos — nunca lo ve.
 - No es un framework general de agent-based modeling. El núcleo cognitivo
   (Observer, WorldModel, Memory, etc.) es propio y desacoplado, para no
   terminar siendo un wrapper de otra librería.
-- No es, en esta etapa, un dashboard. Lo que existe hoy corre por línea de
-  comandos; el dashboard es instrumentación que se construiría sobre un
-  engine que ya funciona, no al revés.
+- El dashboard (Fase 6) es de solo lectura sobre corridas ya persistidas —
+  no ejecuta experimentos en vivo ni escribe nada. Correr experimentos
+  sigue siendo trabajo de la CLI/scripts; el dashboard es instrumentación
+  construida sobre un engine que ya funcionaba, no al revés.
 
 ## Estado actual
 
@@ -97,13 +98,32 @@ inaccessible"). Cada corrida vía CLI genera automáticamente un
 `report.html` autocontenido (sin JS, sin recursos externos) con
 accuracy/prediction_error/divergence por agente.
 
-**Fase 6 — Dashboard** (en curso; evaluamos que valía la pena antes de
-empezar). 6.1: API de FastAPI de solo lectura sobre `experiments/`
-(`GET /runs`, `GET /runs/{run_id}`), sin ningún endpoint que ejecute o
-escriba nada. 6.2: frontend (Vite + React + TypeScript + Recharts) con
-selector de corridas y vista principal — World (ground truth) y Observer
-(belief) lado a lado evolucionando en el tiempo, más `prediction_error`
-por agente. Ver `dashboard/web/README.md` para correrlo.
+**Fase 6 — Dashboard** (evaluamos que valía la pena antes de empezar).
+6.1: API de FastAPI de solo lectura sobre `experiments/` (`GET /runs`,
+`GET /runs/{run_id}`), sin ningún endpoint que ejecute o escriba nada.
+6.2: frontend (Vite + React + TypeScript + Recharts) con selector de
+corridas y vista principal — World (ground truth) y Observer (belief)
+lado a lado evolucionando en el tiempo, más `prediction_error` por
+agente. 6.3: vista "Inside the observer" — beliefs actuales con
+confianza, self-model (capabilities/limitations) para agentes
+metacognitivos, e historial reciente reconstruido de los datos ya
+persistidos (explícitamente **no** el subsistema formal de Episodic
+Memory, que no está implementado). Ver `dashboard/web/README.md` para
+correrlo.
+
+**Fase 7 — Experiment Discovery.** De "simulador de una arquitectura" a
+"buscador de arquitecturas": un barrido desatendido de 7 arquitecturas ×
+3 niveles de ruido de sensor (`scripts/batch_runner.py`), analizado por
+`scripts/analyze_batch.py` (tabla + heatmap SVG de qué arquitectura
+minimiza `reality_model_divergence`, y por qué). El hallazgo: el agente
+con memoria simple (`capacity=200`) le gana en velocidad de convergencia
+a los agentes bayesianos (Predictive/Metacognitive) en los tres niveles
+de ruido — el modelo de likelihood fijo que usan estos últimos resultó
+ser una aproximación más cruda del proceso real que un promedio
+adaptativo. No confirma la intuición de que "más sofisticado es mejor".
+
+Con esto queda completo el roadmap de `02_roadmap_fases.md` (Fase 0 a
+Fase 7).
 
 Cada corrida queda persistida en `experiments/<fecha>_<nombre>_<seed>/` con
 `config.json`, `ground_truth.json`, `observations.json`, `beliefs.json`,
