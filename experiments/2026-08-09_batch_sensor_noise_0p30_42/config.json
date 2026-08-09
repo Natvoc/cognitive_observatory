@@ -1,0 +1,16 @@
+{
+  "name": "batch_sensor_noise_0p30",
+  "seed": 42,
+  "steps": 10000,
+  "hidden_state": "A",
+  "sensor_noise_std": 0.3,
+  "agents": [
+    "agent_0_reactive",
+    "agent_1_memory_cap0",
+    "agent_1_memory_cap50",
+    "agent_1_memory_cap200",
+    "agent_2_predictive_uniform",
+    "agent_2_predictive_salience",
+    "agent_3_metacognitive"
+  ]
+}
